@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../_api/ApiClient.dart';
+import '../_models/pokemon.dart';
 
-import '../widgets/custom_stack.dart';
-import '../widgets/custom_text.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.title});
@@ -10,35 +10,49 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
-      ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background_image.jpeg'),
-                fit: BoxFit.cover,
-              ),
+    return FutureBuilder<List<Pokemon>>(
+      future: PokemonApiClient().fetchPokemonData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(title),
             ),
-          ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                CustomText('Nombre de la película', style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 20),
-                const CustomStack(),
-              ],
+            body: const Center(
+              child: CircularProgressIndicator(),
             ),
-          ),
-        ],
-      ),
+          );
+        } else if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(title),
+              backgroundColor: Colors.green,
+            ),
+            body: Center(
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
+        } else {
+          final pokemons = snapshot.data!;
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(title),
+              backgroundColor: Colors.green,
+            ),
+            body: ListView.builder(
+              itemCount: pokemons.length,
+              itemBuilder: (context, index) {
+                final pokemon = pokemons[index];
+                return ListTile(
+                  title: Text(pokemon.name),
+                  subtitle: Text(pokemon.url),
+                );
+              },
+            ),
+          );
+        }
+      },
     );
   }
 }
+
